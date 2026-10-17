@@ -12,7 +12,8 @@
     "build": "npm run build:cloudflare",
     "deploy": "wrangler deploy",
     "dev:cloudflare": "wrangler dev --local-protocol https",
-    "test:cloudflare": "npm run build:cloudflare && node --test tests/cloudflare/*.test.mjs"
+    "test:cloudflare": "npm run build:cloudflare && node --test tests/cloudflare/*.test.mjs",
+    "test:browser": "node --test tests/browser/*.test.mjs"
   },
   "engines": {
     "node": ">=20"
@@ -24,6 +25,7 @@
   "devDependencies": {
     "esbuild": "0.28.2",
     "miniflare": "5.20260918.0-alpha",
+    "playwright": "1.62.1",
     "wrangler": "4.135.0"
   },
   "cloudflare": {

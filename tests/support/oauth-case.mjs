@@ -17,6 +17,8 @@ export async function verifyOAuth(g) {
   const challenge = createHash('sha256').update(verifier).digest('base64url');
   const params = new URLSearchParams({client_id:client.client_id,redirect_uri:redirect,response_type:'code',code_challenge:challenge,code_challenge_method:'S256',scope:'garden:play',state:'test-state',resource:publicBase+'/mcp'});
   const auth = await g.request('/authorize?' + params); assert.equal(auth.status,200);
+  assert.equal(auth.headers.get('referrer-policy'), 'same-origin');
+  assert.equal(auth.headers.get('content-security-policy'), "default-src 'none'; style-src 'self'; form-action 'self' https://client.example.com; frame-ancestors 'none'");
   const page = await auth.text(); assert.ok(!page.includes(g.keys.user)); assert.ok(!page.includes(g.keys.ai));
   const transaction = /name="transaction" value="([^"]+)"/.exec(page)?.[1]; assert.ok(transaction);
   const cookie = auth.headers.get('set-cookie').split(';')[0];
@@ -25,7 +27,12 @@ export async function verifyOAuth(g) {
   const approval = {transaction,key:g.keys.user,decision:'approve'};
   assert.equal((await form('/oauth/approve',approval,{Origin:publicBase})).status,403);
   assert.equal((await form('/oauth/approve',approval,{Origin:'https://evil.example',Cookie:cookie})).status,403);
+  assert.equal((await form('/oauth/approve',approval,{Origin:'null',Cookie:cookie})).status,403);
+  assert.equal((await form('/oauth/approve',approval,{Cookie:cookie})).status,403);
+  assert.equal((await form('/oauth/approve',approval,{Origin:publicBase,Cookie:'rh_oauth_csrf=invalid-test-cookie'})).status,403);
   const consent = await form('/oauth/approve',approval,{Origin:publicBase,Cookie:cookie}); assert.equal(consent.status,303);
+  assert.equal(consent.headers.get('referrer-policy'), 'no-referrer');
+  assert.equal((await form('/oauth/approve',approval,{Origin:publicBase,Cookie:cookie})).status,403);
   const location = new URL(consent.headers.get('location')); assert.equal(location.origin,'https://client.example.com'); assert.equal(location.searchParams.get('state'),'test-state');
   await g.restart(); // An approved one-use code must survive as well.
   const tokenForm = {grant_type:'authorization_code',client_id:client.client_id,code:location.searchParams.get('code'),redirect_uri:redirect,code_verifier:verifier,resource:publicBase+'/mcp'};

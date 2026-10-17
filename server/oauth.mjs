@@ -66,7 +66,12 @@ export async function createOAuth({ access, publicBase, dataDir, storage }) {
       const id = newKey(), csrf = newKey();
       pending.set(id, { clientId: client.client_id, params, csrf: hash(csrf), exp: Date.now() + 600000, attempts: 0 });
       await persist();
-      res.set({ 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer', 'X-Frame-Options': 'DENY', 'Content-Security-Policy': "default-src 'none'; style-src 'self'; form-action 'self'; frame-ancestors 'none'" });
+      // no-referrer makes a browser form POST send Origin: null, failing our CSRF origin check.
+      // Keep same-origin form provenance; the external callback still uses no-referrer below.
+      // Chromium applies form-action to the 303 redirect as well. Allow only the
+      // validated client callback origin, not arbitrary cross-origin form targets.
+      const callbackOrigin = new URL(params.redirectUri).origin;
+      res.set({ 'Cache-Control': 'no-store', 'Referrer-Policy': 'same-origin', 'X-Frame-Options': 'DENY', 'Content-Security-Policy': `default-src 'none'; style-src 'self'; form-action 'self' ${callbackOrigin}; frame-ancestors 'none'` });
       res.cookie('rh_oauth_csrf', csrf, { httpOnly: true, secure: true, sameSite: 'lax', path: '/oauth/approve', maxAge: 600000 });
       res.type('html').send(`<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/connect/style.css"><title>授权花园伙伴</title><main><p class="eyebrow">RAINHOLM GARDEN</p><h1>让 AI 走进花园</h1><p>客户端：<strong>${escape(client.client_name || 'MCP client')}</strong></p><p>回调域名：${escape(new URL(params.redirectUri).host)}</p><p>授权后，该客户端可以读取花园状态和最近消息、指挥黑猫、种浇收。它不能取得玩家钥匙，也不能管理连接设置。只有你主动发起的连接才应继续。</p><form method="post" action="/oauth/approve"><input type="hidden" name="transaction" value="${id}"><label for="key">玩家钥匙</label><input id="key" name="key" type="password" required autocomplete="off"><button name="decision" value="approve">授权这个伙伴</button><button name="decision" value="deny" formnovalidate class="secondary">取消</button></form></main></html>`);
     },

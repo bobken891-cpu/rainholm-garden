@@ -231,6 +231,8 @@ node vendor/aifarm/tools/smoke-test.mjs
 node vendor/aifarm/tools/parity-check.mjs
 ```
 
+浏览器授权回归：测试环境需安装 OpenSSL；先运行 `npx playwright install chromium`，再运行 `npm run test:browser`。测试使用临时存档、临时证书和本地 HTTPS 站点，让真实 Chromium 提交实际授权页，检查 Origin / Cookie、连续新授权与取消、回调隐私及令牌换取；不需要真实 ChatGPT 账号。CI 会自动运行此检查。
+
 项目测试使用临时存档，覆盖启动、地图、角色认证、官方 MCP 客户端、Actions、OAuth、幂等重试和来源边界。Cloudflare 另运行 `npm run test:cloudflare`（Node 22+）。版本验证范围见 [v1.3 发布检查](docs/RELEASE-1.3.md)。
 
 ## TODO

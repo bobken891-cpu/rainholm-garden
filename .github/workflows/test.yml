@@ -53,3 +53,15 @@ jobs:
       - run: npx wrangler deploy --dry-run --outdir .cloudflare/check
         env:
           WRANGLER_SEND_METRICS: 'false'
+
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
