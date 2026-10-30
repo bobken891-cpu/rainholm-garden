@@ -240,3 +240,5 @@ node vendor/aifarm/tools/parity-check.mjs
 - [ ] 补充浏览器交互的自动化回归测试。
 - [ ] i18n：界面文案全是中文，硬编码在 `app.js` 和几份增量包里。
 - [ ] 更多客户端版本的实机兼容性回归。
+
+    <!-- trigger rebuild -->
