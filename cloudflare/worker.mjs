@@ -84,7 +84,7 @@ export class Garden extends DurableObject {
             { status: response.status, headers: response.headers });
         } finally { await new Promise(resolve => server.close(resolve)); }
       } catch (error) {
-        console.error('[garden] cloud request failed:', error.name || 'Error');
+        console.error('[garden] cloud request failed:', error?.name, error?.message, error?.stack);
         // Discard any in-memory state after a storage failure; load durable data
         // on the next request. Never return configuration values or secrets.
         this.handler = null;
